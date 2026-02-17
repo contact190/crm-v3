@@ -62,7 +62,7 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "ideal-gestion",
+        "owner": "contact190",
         "repo": "crm-v3"
       }
     ],
