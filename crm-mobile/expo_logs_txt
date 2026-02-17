@@ -1,0 +1,8 @@
+Starting project at C:\Users\USER\Desktop\crm v3\crm-mobile
+Starting Metro Bundler
+warning: Bundler cache is empty, rebuilding (this may take a minute)
+Waiting on http://localhost:8081
+Logs for your project will appear below.
+Web node_modules\expo\AppEntry.js ▓▓▓▓▓░░░░░░░░░░░ 33.5% (11/19)
+Web node_modules\expo\AppEntry.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 81.1% (454/504)
+Web Bundled 6243ms node_modules\expo\AppEntry.js (539 modules)

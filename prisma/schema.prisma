@@ -1,0 +1,520 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/client"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// Phase 0: Multi-Tenancy & Super-Admin
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  legalName   String?
+  taxId       String?  // NIF/RC for Algeria
+  slug        String   @unique
+  logo        String?
+  isActive    Boolean  @default(true)
+  phone       String?
+  city        String?  
+  address     String?
+  printerTicket String?  // Name of the printer for tickets-
+  printerLabel  String?  // Name of the printer for barcode labels
+  printerA4     String?  // Name of the printer for A4 documents
+  ticketWidth   String   @default("80mm") // 80mm or 58mm
+  ticketHeader  String?  @default("MERCI DE VOTRE VISITE")
+  ticketFooter  String?  @default("A BIENTOT")
+  ownerName     String?
+  planId        String?
+  productLimit  Int      @default(1000)
+  employeeLimit Int      @default(5)
+  posLimit      Int      @default(1)
+  lastInvoiced  DateTime?
+
+  // Tax Settings (Algeria)
+  tvaRate       Float    @default(19)
+  tapRate       Float    @default(1)
+  stampDuty     Float    @default(0)
+  nif           String?
+  nis           String?
+  rc            String?
+  ai            String?  // Article d'Imposition (Organization)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  // Licensing
+  licenseType String   @default("FREE") // FREE, BASIC, PREMIUM, ENTERPRISE
+  licenseEnd  DateTime?
+  userLimit   Int      @default(5)
+  killSwitch  Boolean  @default(false)
+
+  // Relations
+  users       User[]
+  clients     Client[]
+  products    Product[]
+  categories  Category[]
+  transactions Transaction[]
+  auditLogs   AuditLog[]
+  expenses    Expense[]
+  warehouses  Warehouse[]
+  suppliers   Supplier[]
+  zReports    ZReport[]
+  employees       Employee[]
+  attendance      Attendance[]
+  salaryAdvances  SalaryAdvance[]
+  payrolls        Payroll[]
+  accounts        Account[]
+  accountFlows    AccountFlow[]
+  recurringExpenses RecurringExpense[]
+  roles           Role[]
+  plan            SubscriptionPlan?  @relation(fields: [planId], references: [id])
+}
+
+model SubscriptionPlan {
+  id            String         @id @default(cuid())
+  name          String
+  price         Float
+  productLimit  Int
+  employeeLimit Int
+  posLimit      Int      @default(1)
+  description   String?
+  organizations Organization[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @default(now()) @updatedAt
+}
+
+model Role {
+  id             String           @id @default(cuid())
+  name           String
+  description    String?
+  organizationId String
+  organization   Organization     @relation(fields: [organizationId], references: [id])
+  permissions    RolePermission[]
+  users          User[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @default(now()) @updatedAt
+
+  @@unique([name, organizationId])
+}
+
+model Permission {
+  id          String           @id @default(cuid())
+  slug        String           @unique // e.g., "view_finance", "pos_access"
+  description String?
+  roles       RolePermission[]
+}
+
+model RolePermission {
+  roleId       String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+model User {
+  id             String       @id @default(cuid())
+  email          String       @unique
+  username       String?      @unique 
+  name           String?
+  password       String       // Hashed
+  visiblePassword String?     // STORED PLAIN TEXT (Admin request for recovery)
+  pinCode        String?      // Optional PIN for quick access/POS
+  isSystemAdmin  Boolean      @default(false)
+  roleId         String?
+  role           Role?        @relation(fields: [roleId], references: [id])
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @default(now()) @updatedAt
+  auditLogs      AuditLog[]
+  loginLogs      LoginLog[]
+  employee       Employee?
+}
+
+model Category {
+  id             String       @id @default(cuid())
+  name           String
+  parentId       String?
+  parent         Category?    @relation("SubCategories", fields: [parentId], references: [id])
+  children       Category[]   @relation("SubCategories")
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  products       Product[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @default(now()) @updatedAt
+}
+
+model AuditLog {
+  id             String       @id @default(cuid())
+  action         String       // CREATE, UPDATE, DELETE, LOGIN, etc.
+  entity         String       // CLIENT, PRODUCT, TRANSACTION
+  entityId       String?
+  details        String?      // JSON string of changes
+  userId         String
+  user           User         @relation(fields: [userId], references: [id])
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  ipAddress      String?
+  createdAt      DateTime     @default(now())
+}
+
+model LoginLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+}
+
+// Phase 1 & 3: POS & Stock
+model Client {
+  id             String       @id @default(cuid())
+  name           String
+  type           String       @default("PARTICULIER") // PARTICULIER, PROFESSIONNEL
+  phone          String?
+  email          String?
+  address        String?
+  district       String?      // Quartier
+  nif            String?
+  nis            String?
+  rc             String?
+  totalDebt      Float        @default(0)
+  creditLimit    Float?       // Plafond de crédit (null = illimité)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  transactions   Transaction[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt
+}
+
+model Warehouse {
+  id             String       @id @default(cuid())
+  name           String
+  address        String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  stock          WarehouseStock[]
+  movements      StockMovement[]
+  transactions   Transaction[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @default(now()) @updatedAt
+}
+
+
+model Product {
+  id             String           @id @default(cuid())
+  name           String
+  sku            String?
+  barcode        String?          // Code-barres de l'unité de base
+  image          String?          // Image du produit en Base64
+  price          Float
+  cost           Float            @default(0) // Legacy cost field
+  lastCost       Float            @default(0) // DPA: Dernier Prix d'Achat
+  avgCost        Float            @default(0) // PMP: Prix Moyen Pondéré
+  previousCost   Float            @default(0) // Used for arrows
+  stock          Float            @default(0) // Global cached stock
+  minStock       Float            @default(0) // Minimum stock level for alerts
+  unit           String           @default("pcs") // Unité de base
+  color          String?
+  size           String?
+  categoryId     String?
+  category       Category?        @relation(fields: [categoryId], references: [id])
+  organizationId String
+  organization   Organization     @relation(fields: [organizationId], references: [id])
+  warehouseStock WarehouseStock[]
+  movements      StockMovement[]
+  units          ProductUnit[]    // Unités de mesure multiples
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @default(now()) @updatedAt
+}
+
+model ProductUnit {
+  id           String   @id @default(cuid())
+  productId    String
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  unitName     String   // ex: "Carton", "Pack", "Palette"
+  conversion   Float    // ex: 12 (1 carton = 12 pièces)
+  barcode      String?  // Code-barres spécifique à cette unité
+  sellPrice    Float?   // Prix de vente spécifique (optionnel)
+  buyPrice     Float?   // Prix d'achat spécifique (optionnel)
+  isDefault    Boolean  @default(false) // Unité par défaut pour les achats/ventes
+  createdAt    DateTime @default(now())
+  
+  @@unique([productId, unitName])
+}
+
+model WarehouseStock {
+  id             String       @id @default(cuid())
+  productId      String
+  product        Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  warehouseId    String
+  warehouse      Warehouse    @relation(fields: [warehouseId], references: [id])
+  quantity       Float        @default(0)
+  aisle          String?
+  shelf          String?
+  bin            String?
+  
+  @@unique([productId, warehouseId])
+}
+
+model StockMovement {
+  id             String       @id @default(cuid())
+  productId      String
+  product        Product      @relation(fields: [productId], references: [id])
+  warehouseId    String
+  warehouse      Warehouse    @relation(fields: [warehouseId], references: [id])
+  type           String       // IN, OUT, TRANSFER, ADJUST
+  quantity       Float
+  previousStock  Float?       // Stock before move
+  newStock       Float?       // Stock after move
+  supplierId     String?      // Optional relation to Supplier
+  supplier       Supplier?    @relation(fields: [supplierId], references: [id])
+  supplierName   String?      // Provider name for legacy/quick moves
+  reason         String?      // Vente, Réception, Casse, Perte
+  referenceId    String?      // ID of Transaction or Transfer
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @default(now()) @updatedAt
+}
+
+model Transaction {
+  id             String       @id @default(cuid())
+  type           String       @default("SALE") // SALE, PURCHASE, DEBT_PAYMENT
+  totalAmount    Float
+  paidAmount     Float
+  paymentMode    String       @default("CASH") // CASH, CARD, BARIDIMOB, DAHABIYA
+  status         String       @default("COMPLETED")
+  clientId       String?
+  client         Client?      @relation(fields: [clientId], references: [id])
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  items          String?      @default("[]") // JSON string of items sold
+  warehouseId    String?
+  warehouse      Warehouse?   @relation(fields: [warehouseId], references: [id])
+  
+  accountId      String?      // Link to liquidity account
+  account        Account?     @relation(fields: [accountId], references: [id])
+  
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @default(now()) @updatedAt
+}
+
+model Expense {
+  id             String       @id @default(cuid())
+  label          String       // Loyer, Electricité, Achat Fournisseur
+  amount         Float
+  category       String       @default("OPERATIONAL") // OPERATIONAL, PURCHASE, OTHER
+  
+  isPaid         Boolean      @default(true)
+  dueDate        DateTime?    // For programmed expenses
+  
+  accountId      String?      // From which account was it paid?
+  account        Account?     @relation(fields: [accountId], references: [id])
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @default(now()) @updatedAt
+}
+
+model RecurringExpense {
+  id             String       @id @default(cuid())
+  label          String
+  amount         Float
+  category       String       @default("OPERATIONAL")
+  frequency      String       @default("MONTHLY") // MONTHLY, YEARLY, ONCE
+  
+  startDate      DateTime     @default(now())
+  nextRun        DateTime     @default(now())
+  active         Boolean      @default(true)
+  
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @default(now()) @updatedAt
+}
+
+model Supplier {
+  id             String       @id @default(cuid())
+  name           String
+  contactName    String?
+  phone          String?
+  email          String?
+  address        String?
+  nif            String?
+  nis            String?
+  rc             String?
+  ai             String?      // Article d'Imposition
+  totalDebt      Float        @default(0) // What we owe to this supplier
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  movements      StockMovement[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @default(now()) @updatedAt
+}
+
+model ZReport {
+  id              String       @id @default(cuid())
+  date            DateTime     @default(now())
+  
+  totalSales      Float        // Ventes totales
+  totalExpenses   Float        // Charges (Sortie Caisse)
+  netTotal        Float        // Théorique en caisse (Sales - Expenses)
+  
+  cashCounted     Float        // Réel compté par l'utilisateur
+  variance        Float        // Ecart (Real - Theoretical)
+  
+  details         String?      // JSON: Breakdown by payment mode
+  
+  userId          String?      // Optional: who performed the closing
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id])
+}
+
+model Employee {
+  id             String       @id @default(cuid())
+  name           String
+  phone          String?
+  email          String?
+  address        String?
+  photo          String?      // Base64 or URL
+  
+  // HR & Role
+  role           String       @default("EMPLOYEE") // MANAGER, SELLER, DRIVER, WAREHOUSE
+  contractType   String       @default("CDI") // CDI, CDD, APPRENTI
+  joinDate       DateTime     @default(now())
+  idCardImage    String?
+  licenseImage   String?
+  
+  // Login & Access
+  pinCode        String?      // 4-digit PIN for kiosk
+  userId         String?      @unique // Optional link to system User
+  user           User?        @relation(fields: [userId], references: [id])
+  
+  // Finance
+  baseSalary     Float        @default(0)
+  dailyRate      Float?       // For calculated daily pay
+  commissionPct  Float        @default(0) // % of sales
+  monthlyGoal    Float        @default(0) // Sales target
+  
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  
+  attendances    Attendance[]
+  advances       SalaryAdvance[]
+  payrolls       Payroll[]
+  
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @default(now()) @updatedAt
+}
+
+model Attendance {
+  id             String       @id @default(cuid())
+  employeeId     String
+  employee       Employee     @relation(fields: [employeeId], references: [id])
+  
+  date           DateTime     @default(now()) // The day of attendance
+  clockIn        DateTime     @default(now())
+  clockOut       DateTime?
+  
+  ipAddress      String?
+  deviceInfo     String?
+  status         String       @default("PRESENT") // PRESENT, LATE, ABSENT
+  
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @default(now()) @updatedAt
+}
+
+model SalaryAdvance {
+  id             String       @id @default(cuid())
+  employeeId     String
+  employee       Employee     @relation(fields: [employeeId], references: [id])
+  
+  amount         Float
+  requestDate    DateTime     @default(now())
+  reason         String?
+  
+  status         String       @default("PENDING") // PENDING, APPROVED, REJECTED, PAID, DEDUCTED
+  approvedBy     String?      // User ID of approver
+  
+  isDeducted     Boolean      @default(false) // True if already subtracted from a payroll
+  
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  updatedAt      DateTime     @default(now()) @updatedAt
+}
+
+model Payroll {
+  id             String       @id @default(cuid())
+  employeeId     String
+  employee       Employee     @relation(fields: [employeeId], references: [id])
+  
+  month          String       // Format "YYYY-MM"
+  
+  baseSalary     Float
+  attendanceDed  Float        @default(0) // Deductions for absence
+  advancesDed    Float        @default(0) // Deductions for advances
+  commissions    Float        @default(0)
+  bonuses        Float        @default(0)
+  
+  netPayable     Float
+  
+  status         String       @default("DRAFT") // DRAFT, ISSUED, PAID
+  generatedAt    DateTime     @default(now())
+  
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  updatedAt      DateTime     @default(now()) @updatedAt
+}
+
+// --- ADVANCED FINANCE & TREASURY ---
+
+model Account {
+  id             String       @id @default(cuid())
+  name           String       // Caisse, CCP, BaridiMob, SGA, etc.
+  type           String       @default("CASH") // CASH, BANK, MOBILE
+  balance        Float        @default(0)
+  
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  
+  transactions   Transaction[]
+  expenses       Expense[]
+  flows          AccountFlow[]
+  
+  isDefault      Boolean      @default(false)
+  
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @default(now()) @updatedAt
+}
+
+model AccountFlow {
+  id             String       @id @default(cuid())
+  accountId      String
+  account        Account      @relation(fields: [accountId], references: [id])
+  
+  type           String       // IN, OUT, TRANSFER
+  amount         Float
+  balanceAfter   Float
+  
+  category       String?      // SALE, PURCHASE, EXPENSE, TRANSFER, DEBT_PAYMENT
+  reason         String?      // Description
+  
+  // Cross-references
+  sourceId       String?      // ID of Transaction, Expense, or another Flow
+  targetFlowId   String?      // For transfers (link to the other side)
+  
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @default(now()) @updatedAt
+}

@@ -1,0 +1,180 @@
+// Admin handlers for Dashboard.tsx
+// Add these handlers to your Dashboard component
+
+// Handler for saving/updating user
+const handleSaveUser = async (data: any) => {
+    setLoading(true);
+    try {
+        let result;
+        if (data.userId) {
+            // Update existing user
+            result = await updateUser(data.userId, {
+                email: data.email,
+                name: data.name,
+                password: data.password || undefined,
+                pinCode: data.pinCode,
+                roleId: data.roleId
+            });
+        } else {
+            // Create new user
+            result = await createUser({
+                email: data.email,
+                name: data.name,
+                password: data.password,
+                pinCode: data.pinCode,
+                roleId: data.roleId,
+                organizationId: data.organizationId
+            });
+        }
+
+        if (result.success) {
+            showMessage('Succès', 'Utilisateur enregistré avec succès', 'success');
+            setShowUserModal({ show: false });
+            await loadAdminData();
+            
+            // If employee is linked, update employee record
+            if (data.employeeId && result.data) {
+                await updateEmployee(data.employeeId, {
+                    userId: result.data.id,
+                    pinCode: data.pinCode
+                });
+            }
+        } else {
+            showMessage('Erreur', result.error || 'Erreur lors de l\'enregistrement', 'error');
+        }
+    } catch (error: any) {
+        showMessage('Erreur', error.message, 'error');
+    }
+    setLoading(false);
+};
+
+// Handler for deleting user
+const handleDeleteUser = async (userId: string) => {
+    showConfirm(
+        'Confirmer la suppression',
+        'Êtes-vous sûr de vouloir supprimer cet utilisateur ?',
+        async () => {
+            setLoading(true);
+            const result = await deleteUser(userId);
+            if (result.success) {
+                showMessage('Succès', 'Utilisateur supprimé', 'success');
+                await loadAdminData();
+            } else {
+                showMessage('Erreur', result.error || 'Erreur lors de la suppression', 'error');
+            }
+            setLoading(false);
+        }
+    );
+};
+
+// Handler for saving/updating role
+const handleSaveRole = async (data: any) => {
+    setLoading(true);
+    try {
+        let result;
+        if (data.roleId) {
+            // Update existing role
+            result = await updateRole(data.roleId, {
+                name: data.name,
+                description: data.description
+            });
+        } else {
+            // Create new role
+            result = await createRole({
+                name: data.name,
+                description: data.description,
+                organizationId: data.organizationId
+            });
+        }
+
+        if (result.success) {
+            showMessage('Succès', 'Rôle enregistré avec succès', 'success');
+            setShowRoleModal({ show: false });
+            await loadAdminData();
+        } else {
+            showMessage('Erreur', result.error || 'Erreur lors de l\'enregistrement', 'error');
+        }
+    } catch (error: any) {
+        showMessage('Erreur', error.message, 'error');
+    }
+    setLoading(false);
+};
+
+// Handler for deleting role
+const handleDeleteRole = async (roleId: string) => {
+    showConfirm(
+        'Confirmer la suppression',
+        'Êtes-vous sûr de vouloir supprimer ce rôle ?',
+        async () => {
+            setLoading(true);
+            const result = await deleteRole(roleId);
+            if (result.success) {
+                showMessage('Succès', 'Rôle supprimé', 'success');
+                await loadAdminData();
+            } else {
+                showMessage('Erreur', result.error || 'Erreur lors de la suppression', 'error');
+            }
+            setLoading(false);
+        }
+    );
+};
+
+// Handler for assigning permissions to role
+const handleSavePermissions = async (roleId: string, permissionIds: string[]) => {
+    setLoading(true);
+    const result = await assignPermissionsToRole(roleId, permissionIds);
+    if (result.success) {
+        showMessage('Succès', 'Permissions mises à jour', 'success');
+        setShowPermissionsModal({ show: false });
+        await loadAdminData();
+    } else {
+        showMessage('Erreur', result.error || 'Erreur lors de la mise à jour', 'error');
+    }
+    setLoading(false);
+};
+
+// Add this to your JSX return, after the HR tab section:
+/*
+{activeTab === "admin" && (
+    <AdminTab
+        adminSubTab={adminSubTab}
+        setAdminSubTab={setAdminSubTab}
+        allSystemUsers={allSystemUsers}
+        allRoles={allRoles}
+        allPermissions={allPermissions}
+        employees={employees}
+        setShowUserModal={setShowUserModal}
+        setShowRoleModal={setShowRoleModal}
+        setShowPermissionsModal={setShowPermissionsModal}
+        onDeleteUser={handleDeleteUser}
+        onDeleteRole={handleDeleteRole}
+    />
+)}
+
+// Add these modals at the end of your JSX, with other modals:
+<UserModal
+    show={showUserModal.show}
+    user={showUserModal.user}
+    roles={allRoles}
+    employees={employees}
+    organizationId={stats.orgId}
+    onClose={() => setShowUserModal({ show: false })}
+    onSave={handleSaveUser}
+/>
+
+<RoleModal
+    show={showRoleModal.show}
+    role={showRoleModal.role}
+    organizationId={stats.orgId}
+    onClose={() => setShowRoleModal({ show: false })}
+    onSave={handleSaveRole}
+/>
+
+<PermissionsModal
+    show={showPermissionsModal.show}
+    role={showPermissionsModal.role}
+    allPermissions={allPermissions}
+    onClose={() => setShowPermissionsModal({ show: false })}
+    onSave={handleSavePermissions}
+/>
+*/

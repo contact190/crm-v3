@@ -1,0 +1,91 @@
+{
+  "name": "tmp_app",
+  "version": "0.1.0",
+  "private": true,
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build --webpack",
+    "start": "next start",
+    "lint": "eslint",
+    "electron:dev": "set NODE_ENV=development && electron .",
+    "build:electron": "next build --webpack && electron-builder"
+  },
+  "dependencies": {
+    "@prisma/adapter-libsql": "^7.3.0",
+    "@prisma/client": "^7.3.0",
+    "@serwist/next": "^9.5.3",
+    "@serwist/precaching": "^9.5.3",
+    "@serwist/sw": "^9.5.3",
+    "@types/bcryptjs": "^2.4.6",
+    "bcryptjs": "^3.0.3",
+    "clsx": "^2.1.1",
+    "dexie": "^4.3.0",
+    "electron-updater": "^6.7.3",
+    "framer-motion": "^12.31.0",
+    "jose": "^6.1.3",
+    "libsql": "^0.5.22",
+    "lucide-react": "^0.563.0",
+    "next": "16.1.6",
+    "qrcode.react": "^4.2.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
+    "tailwind-merge": "^3.4.0",
+    "uuid": "^13.0.0",
+    "workbox-window": "^7.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.6",
+    "prisma": "^7.3.0",
+    "typescript": "^5"
+  },
+  "build": {
+    "appId": "dz.ideal.gestion",
+    "productName": "IDEAL GESTION",
+    "asar": true,
+    "asarUnpack": [
+      "**/node_modules/prisma",
+      "**/node_modules/@prisma/engines",
+      ".next"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "ideal-gestion",
+        "repo": "crm-v3"
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "public/icon-512x512.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "IDEAL GESTION",
+      "createDesktopShortcut": "always"
+    },
+    "files": [
+      "package.json",
+      "electron/**/*",
+      ".next/**/*",
+      "public/**/*",
+      "node_modules/**/*",
+      "prisma/starter.db"
+    ]
+  }
+}

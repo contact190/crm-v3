@@ -1,0 +1,51 @@
+Starting project at C:\Users\USER\Desktop\crm v3\crm-mobile
+Starting Metro Bundler
+warning: Bundler cache is empty, rebuilding (this may take a minute)
+The following packages should be updated for best compatibility with the installed expo version:
+  react-native-worklets@1.6.2 - expected version: 0.5.1
+Your project may not work correctly until you install the expected versions of the packages.
+Waiting on http://localhost:8081
+Logs for your project will appear below.
+Web node_modules\expo\AppEntry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web node_modules\expo\AppEntry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 59.5% (162/210)
+Web Bundled 5847ms node_modules\expo\AppEntry.js (539 modules)
+Web node_modules\expo\AppEntry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 3399ms node_modules\expo\AppEntry.js (534 modules)
+ LOG  [web] Logs will appear in the browser console
+Web node_modules\expo\AppEntry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 22ms node_modules\expo\AppEntry.js (1 module)
+ LOG  [web] Logs will appear in the browser console
+Web node_modules\expo\AppEntry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 23ms node_modules\expo\AppEntry.js (1 module)
+ LOG  [web] Logs will appear in the browser console
+Web node_modules\expo\AppEntry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 21ms node_modules\expo\AppEntry.js (1 module)
+ LOG  [web] Logs will appear in the browser console
+Web node_modules\expo\AppEntry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 20ms node_modules\expo\AppEntry.js (1 module)
+ LOG  [web] Logs will appear in the browser console
+Web node_modules\expo\AppEntry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 20ms node_modules\expo\AppEntry.js (1 module)
+ LOG  [web] Logs will appear in the browser console
+Web node_modules\expo\AppEntry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 21ms node_modules\expo\AppEntry.js (1 module)
+ LOG  [web] Logs will appear in the browser console
+Web src\services\api.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 6ms src\services\api.ts (1 module)
+Web node_modules\expo\AppEntry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 23ms node_modules\expo\AppEntry.js (1 module)
+ LOG  [web] Logs will appear in the browser console
+ ERROR  Error: Got unexpected undefined
+    at nullthrows (C:\Users\USER\Desktop\crm v3\crm-mobile\node_modules\nullthrows\nullthrows.js:7:15)
+    at Graph._decrementImportBundleReference (C:\Users\USER\Desktop\crm v3\crm-mobile\node_modules\metro\src\DeltaBundler\Graph.js:420:54)
+    at Graph._removeDependency (C:\Users\USER\Desktop\crm v3\crm-mobile\node_modules\metro\src\DeltaBundler\Graph.js:341:12)
+    at Graph._recursivelyCommitModule (C:\Users\USER\Desktop\crm v3\crm-mobile\node_modules\metro\src\DeltaBundler\Graph.js:236:14)
+    at Graph.traverseDependencies (C:\Users\USER\Desktop\crm v3\crm-mobile\node_modules\metro\src\DeltaBundler\Graph.js:75:12)
+    at DeltaCalculator._getChangedDependencies (C:\Users\USER\Desktop\crm v3\crm-mobile\node_modules\metro\src\DeltaBundler\DeltaCalculator.js:191:42)
+    at DeltaCalculator.getDelta (C:\Users\USER\Desktop\crm v3\crm-mobile\node_modules\metro\src\DeltaBundler\DeltaCalculator.js:72:16)
+    at DeltaBundler.getDelta (C:\Users\USER\Desktop\crm v3\crm-mobile\node_modules\metro\src\DeltaBundler.js:55:12)
+    at IncrementalBundler.updateGraph (C:\Users\USER\Desktop\crm v3\crm-mobile\node_modules\metro\src\IncrementalBundler.js:243:19)
+    at build (C:\Users\USER\Desktop\crm v3\crm-mobile\node_modules\metro\src\Server.js:1000:25)
+Web node_modules\expo\AppEntry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 22ms node_modules\expo\AppEntry.js (1 module)
+ LOG  [web] Logs will appear in the browser console
