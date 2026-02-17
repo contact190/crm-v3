@@ -20,13 +20,11 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          npm install
+          npm ci
 
-      - name: Build Next.js
-        env:
-          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+      - name: Generate Prisma Client
         run: |
-          npm run build
+          npx prisma generate
 
       - name: Build & Publish Electron App
         env:
