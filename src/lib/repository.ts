@@ -664,6 +664,18 @@ export const Repository = {
         return { success: true, data: localItems.map(item => ({ id: item._localId, ...item })) };
     },
 
+    async cleanupDuplicateAccounts(orgId: string) {
+        if (isOnline()) {
+            try {
+                return await actions.cleanupDuplicateAccounts(orgId);
+            } catch (error) {
+                console.error("REPO: cleanupDuplicateAccounts online failed", error);
+            }
+        }
+        return { success: false, error: "Le nettoyage nécessite une connexion" };
+    },
+
+
     async getZReportData(organizationId: string) {
         if (isOnline()) {
             try {

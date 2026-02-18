@@ -4243,6 +4243,15 @@ ${isCredit ? `Client: ${clientSnapshot?.name}` : footer || 'Merci de votre visit
                                         <h3>Gestion de la Trésorerie</h3>
                                         <div style={{ display: 'flex', gap: '1rem' }}>
                                             <button onClick={() => setShowTransferModal(true)} className="glass"><ArrowLeftRight size={18} /> Transfert Interne</button>
+                                            <button onClick={async () => {
+                                                showConfirm("Réparation", "Voulez-vous fusionner les comptes 'Caisse Boutique' en double ? Cette action est irréversible.", async () => {
+                                                    setLoading(true);
+                                                    const res = await Repository.cleanupDuplicateAccounts(stats.orgId);
+                                                    setLoading(false);
+                                                    if (res.success) showMessage("Succès", res.message || "Nettoyage réussi", "success", () => window.location.reload());
+                                                    else showMessage("Erreur", res.error || "Échec du nettoyage", "error");
+                                                });
+                                            }} className="glass" style={{ color: 'var(--warning)' }}><Zap size={18} /> Réparer Doublons</button>
                                             <button onClick={() => setShowAccountModal(true)} className="btn-primary"><Plus size={18} /> Nouveau Compte</button>
                                         </div>
                                     </div>
@@ -4771,8 +4780,25 @@ Merci de votre confiance.
                                 <h2>Ajustement Dette</h2>
                                 <button title="Fermer" onClick={() => setShowAdjustSupplierDebtModal({ show: false })} style={{ background: 'none', border: 'none', color: 'white' }}><X /></button>
                             </div>
-                            <p style={{ textAlign: 'center', opacity: 0.6 }}>Fournisseur: {showAdjustSupplierDebtModal.supplier?.name}</p>
-                            <h2 style={{ textAlign: 'center', opacity: 0.8 }}>Solde: {showAdjustSupplierDebtModal.supplier?.totalDebt.toLocaleString()} DA</h2>
+
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <label style={{ fontSize: '0.8rem', opacity: 0.7, display: 'block', marginBottom: '0.5rem' }}>Fournisseur</label>
+                                <select
+                                    value={showAdjustSupplierDebtModal.supplier?.id || ''}
+                                    onChange={(e) => {
+                                        const selected = stats.suppliers.find(s => s.id === e.target.value);
+                                        setShowAdjustSupplierDebtModal({ ...showAdjustSupplierDebtModal, supplier: selected });
+                                    }}
+                                    style={{ width: '100%', background: 'var(--bg-deep)', border: '1px solid var(--border)', padding: '10px', borderRadius: '8px', color: 'white' }}
+                                >
+                                    <option value="">-- Sélectionner un fournisseur --</option>
+                                    {stats.suppliers.map((s: any) => (
+                                        <option key={s.id} value={s.id}>{s.name} ({s.totalDebt.toLocaleString()} DA)</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <h2 style={{ textAlign: 'center', opacity: 0.8, fontSize: '1rem' }}>Dette Actuelle: {showAdjustSupplierDebtModal.supplier?.totalDebt.toLocaleString() || 0} DA</h2>
                             <form onSubmit={async (e) => {
                                 e.preventDefault();
                                 const fd = new FormData(e.currentTarget);
