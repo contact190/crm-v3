@@ -4243,15 +4243,6 @@ ${isCredit ? `Client: ${clientSnapshot?.name}` : footer || 'Merci de votre visit
                                         <h3>Gestion de la Trésorerie</h3>
                                         <div style={{ display: 'flex', gap: '1rem' }}>
                                             <button onClick={() => setShowTransferModal(true)} className="glass"><ArrowLeftRight size={18} /> Transfert Interne</button>
-                                            <button onClick={async () => {
-                                                showConfirm("Réparation", "Voulez-vous fusionner les comptes 'Caisse Boutique' en double ? Cette action est irréversible.", async () => {
-                                                    setLoading(true);
-                                                    const res = await Repository.cleanupDuplicateAccounts(stats.orgId);
-                                                    setLoading(false);
-                                                    if (res.success) showMessage("Succès", res.message || "Nettoyage réussi", "success", () => window.location.reload());
-                                                    else showMessage("Erreur", res.error || "Échec du nettoyage", "error");
-                                                });
-                                            }} className="glass" style={{ color: 'var(--warning)' }}><Zap size={18} /> Réparer Doublons</button>
                                             <button onClick={() => setShowAccountModal(true)} className="btn-primary"><Plus size={18} /> Nouveau Compte</button>
                                         </div>
                                     </div>
