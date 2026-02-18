@@ -8,7 +8,14 @@ const databaseUrl = process.env.DATABASE_URL || "file:dev.db";
 // Use LibSQL adapter only for local file/libsql URLs
 const isLibSql = databaseUrl.startsWith("file:") || databaseUrl.startsWith("libsql:") || !databaseUrl.includes("://");
 
-let prismaOptions: any = {};
+let prismaOptions: any = {
+    datasources: {
+        db: {
+            url: databaseUrl
+        }
+    }
+};
+
 if (isLibSql) {
     const adapter = new PrismaLibSql({
         url: databaseUrl,
