@@ -160,17 +160,34 @@ export default async function Home() {
 
   // Ensure default account exists for this tenant
   let finalAccounts = accounts;
-  if (accounts.length === 0) {
-    const defaultAcc = await db.account.create({
-      data: {
-        name: "Caisse Boutique",
-        type: "CASH",
-        balance: 0,
-        isDefault: true,
-        organizationId: org.id
+  const hasDefaultAccount = accounts.some((a: any) => a.isDefault || a.name === "Caisse Boutique");
+
+  if (!hasDefaultAccount) {
+    // Attempt to find it one last time before creating to avoid race conditions
+    const existingDefault = await db.account.findFirst({
+      where: {
+        organizationId: org.id,
+        OR: [
+          { isDefault: true },
+          { name: "Caisse Boutique" }
+        ]
       }
     });
-    finalAccounts = [defaultAcc];
+
+    if (!existingDefault) {
+      const defaultAcc = await db.account.create({
+        data: {
+          name: "Caisse Boutique",
+          type: "CASH",
+          balance: 0,
+          isDefault: true,
+          organizationId: org.id
+        }
+      });
+      finalAccounts = [...accounts, defaultAcc];
+    } else {
+      finalAccounts = accounts;
+    }
   }
 
   const stats = JSON.parse(JSON.stringify({
