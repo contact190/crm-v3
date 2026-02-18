@@ -302,6 +302,7 @@ export async function adjustStock(data: {
     orgId?: string
 }) {
     try {
+        if (!data.productId) throw new Error("ID Produit manquant");
         const product = await db.product.findUnique({
             where: { id: data.productId },
             include: { units: true }

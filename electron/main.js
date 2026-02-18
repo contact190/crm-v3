@@ -103,17 +103,19 @@ async function startServer() {
     }
 }
 
+let mainWindow;
+
 async function createWindow() {
     const startUrl = await startServer().catch(err => {
         return `data:text/html,<html><body><h1>Erreur de démarrage</h1><p>${err.message}</p></body></html>`;
     });
 
-    const mainWindow = new BrowserWindow({
+    mainWindow = new BrowserWindow({
         width: 1200,
         height: 800,
         webPreferences: {
-            nodeIntegration: true,
-            contextIsolation: false,
+            nodeIntegration: false, // Security best practice
+            contextIsolation: true, // Security best practice
             preload: path.join(__dirname, 'preload.js')
         },
         title: "IDEAL GESTION - Premium Local Server"
@@ -126,9 +128,45 @@ async function createWindow() {
     }
 
     mainWindow.on('closed', function () {
-        // Handle window closed
+        mainWindow = null;
     });
 }
+
+// IPC Handlers
+ipcMain.handle('get-printers', async () => {
+    if (!mainWindow) return [];
+    try {
+        return await mainWindow.webContents.getPrintersAsync();
+    } catch (e) {
+        console.error("Failed to get printers:", e);
+        return [];
+    }
+});
+
+ipcMain.handle('print-job', async (event, content, printerName) => {
+    try {
+        const fs = require('fs');
+        const path = require('path');
+        const os = require('os');
+        const { exec } = require('child_process');
+        const util = require('util');
+        const execAsync = util.promisify(exec);
+
+        const tempFile = path.join(os.tmpdir(), `ticket-${Date.now()}.txt`);
+        fs.writeFileSync(tempFile, content);
+
+        // Escape single quotes for PowerShell
+        const safePrinterName = printerName.replace(/'/g, "''");
+
+        const cmd = `powershell -Command "Get-Content -Path '${tempFile}' | Out-Printer -Name '${safePrinterName}'"`;
+        await execAsync(cmd);
+
+        return { success: true };
+    } catch (e) {
+        console.error("Print job failed:", e);
+        return { success: false, error: e.message };
+    }
+});
 
 app.on('ready', async () => {
     await createWindow();

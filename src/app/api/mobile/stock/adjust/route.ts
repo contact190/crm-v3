@@ -6,6 +6,10 @@ export async function POST(request: NextRequest) {
         const data = await request.json(); // { productId, quantity, type, reason }
         const { productId, quantity, type } = data;
 
+        if (!productId) {
+            return NextResponse.json({ error: 'Product ID is missing' }, { status: 400 });
+        }
+
         const product = await db.product.findUnique({
             where: { id: productId }
         });

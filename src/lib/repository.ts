@@ -1138,6 +1138,15 @@ export const Repository = {
     },
 
     async printJob(content: string, printerName: string) {
+        if (typeof window !== 'undefined' && (window as any).electronAPI) {
+            try {
+                return await (window as any).electronAPI.printJob(content, printerName);
+            } catch (e) {
+                console.error("Electron printJob failed:", e);
+                return { success: false, error: "Electron Print Failed" };
+            }
+        }
+
         if (isOnline()) {
             try {
                 return await actions.printJob(content, printerName);
