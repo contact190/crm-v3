@@ -5,16 +5,10 @@ import { PrismaLibSql } from "@prisma/adapter-libsql";
 // Resolve database URL (especially for Electron production)
 const databaseUrl = process.env.DATABASE_URL || "file:dev.db";
 
-// Use LibSQL adapter only for local file/libsql URLs
+// Use LibSQL adapter only for local file/libsql URLs (Electron desktop)
 const isLibSql = databaseUrl.startsWith("file:") || databaseUrl.startsWith("libsql:") || !databaseUrl.includes("://");
 
-let prismaOptions: any = {
-    datasources: {
-        db: {
-            url: databaseUrl
-        }
-    }
-};
+let prismaOptions: any = {};
 
 if (isLibSql) {
     const adapter = new PrismaLibSql({
