@@ -299,7 +299,7 @@ export const Repository = {
         if (isOnline()) {
             try {
                 const res = await actions.getClientHistory(clientId);
-                return { success: true, data: res };
+                return res;
             } catch (error) {
                 console.error("REPO: getClientHistory online failed", error);
             }
