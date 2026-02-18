@@ -1358,54 +1358,59 @@ export async function transferFunds(data: { fromId: string, toId: string, amount
 // Cleanup Duplicate Accounts
 export async function cleanupDuplicateAccounts(orgId: string) {
     try {
-        const accounts = await db.account.findMany({
-            where: {
-                organizationId: orgId,
-                name: "Caisse Boutique"
-            },
+        const allAccounts = await db.account.findMany({
+            where: { organizationId: orgId },
             orderBy: { createdAt: 'asc' }
         });
 
-        if (accounts.length <= 1) return { success: true, message: "Aucun doublon trouvé." };
+        const seenNames = new Map<string, any>();
+        let mergeCount = 0;
 
-        const hostAccount = accounts[0];
-        const duplicates = accounts.slice(1);
+        for (const account of allAccounts) {
+            const normalizedName = account.name.trim().toLowerCase();
+            if (seenNames.has(normalizedName)) {
+                const hostAccount = seenNames.get(normalizedName);
+                const duplicate = account;
 
-        console.log(`Merging ${duplicates.length} duplicate accounts into ${hostAccount.id}`);
+                console.log(`Merging duplicate account '${account.name}' (${duplicate.id}) into '${hostAccount.name}' (${hostAccount.id})`);
 
-        for (const duplicate of duplicates) {
-            // Update Transactions
-            await db.transaction.updateMany({
-                where: { accountId: duplicate.id },
-                data: { accountId: hostAccount.id }
-            });
+                // Update Transactions
+                await db.transaction.updateMany({
+                    where: { accountId: duplicate.id },
+                    data: { accountId: hostAccount.id }
+                });
 
-            // Update Expenses
-            await db.expense.updateMany({
-                where: { accountId: duplicate.id },
-                data: { accountId: hostAccount.id }
-            });
+                // Update Expenses
+                await db.expense.updateMany({
+                    where: { accountId: duplicate.id },
+                    data: { accountId: hostAccount.id }
+                });
 
-            // Update AccountFlows
-            await db.accountFlow.updateMany({
-                where: { accountId: duplicate.id },
-                data: { accountId: hostAccount.id }
-            });
+                // Update AccountFlows
+                await db.accountFlow.updateMany({
+                    where: { accountId: duplicate.id },
+                    data: { accountId: hostAccount.id }
+                });
 
-            // Transfer Balance
-            await db.account.update({
-                where: { id: hostAccount.id },
-                data: { balance: { increment: duplicate.balance } }
-            });
+                // Transfer Balance
+                await db.account.update({
+                    where: { id: hostAccount.id },
+                    data: { balance: { increment: duplicate.balance } }
+                });
 
-            // Delete Duplicate
-            await db.account.delete({
-                where: { id: duplicate.id }
-            });
+                // Delete Duplicate
+                await db.account.delete({
+                    where: { id: duplicate.id }
+                });
+
+                mergeCount++;
+            } else {
+                seenNames.set(normalizedName, account);
+            }
         }
 
         revalidatePath("/");
-        return { success: true, message: `Réussi: ${duplicates.length} comptes fusionnés.` };
+        return { success: true, message: `Réussi: ${mergeCount} comptes fusionnés.` };
     } catch (error: any) {
         console.error("Cleanup failed:", error);
         return { success: false, error: error.message };
