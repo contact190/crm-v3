@@ -5,11 +5,11 @@
   "main": "electron/main.js",
   "scripts": {
     "dev": "next dev",
-    "build": "next build --webpack",
+    "build": "npx prisma generate && next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "electron:dev": "set NODE_ENV=development && electron .",
-    "build:electron": "next build --webpack && electron-builder"
+    "build:electron": "npx prisma generate && next build --webpack && electron-builder"
   },
   "dependencies": {
     "@prisma/adapter-libsql": "^7.3.0",
