@@ -146,11 +146,7 @@ export const Repository = {
     async recordPurchase(data: any) {
         if (isOnline()) {
             try {
-                return await actions.adjustStock({
-                    ...data,
-                    type: 'IN',
-                    reason: data.reason || 'Purchase'
-                });
+                return await actions.recordPurchase(data);
             } catch (error) {
                 console.error("REPO: recordPurchase online failed", error);
             }

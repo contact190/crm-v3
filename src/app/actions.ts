@@ -1545,7 +1545,19 @@ export async function recordPurchase(data: {
                 });
             }
 
-            // 5. Handle Supplier Debt
+            // 5. Create Expense record
+            await tx.expense.create({
+                data: {
+                    label: `Achat #${transaction.id.slice(-6)}`,
+                    amount: totalPurchaseAmount,
+                    category: "PURCHASE",
+                    organizationId: data.orgId,
+                    accountId: data.paidAmount > 0 ? data.accountId : null,
+                    isPaid: data.paidAmount >= totalPurchaseAmount
+                }
+            });
+
+            // 6. Handle Supplier Debt
             const debt = totalPurchaseAmount - data.paidAmount;
             if (debt > 0 && finalSupplierId) {
                 await tx.supplier.update({
